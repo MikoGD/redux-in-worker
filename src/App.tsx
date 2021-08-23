@@ -1,11 +1,14 @@
 import React from 'react';
-import './App.css';
+import { ChakraProvider, Center } from '@chakra-ui/react';
+import Counter from './counter/counter.component';
 
 const App: React.FunctionComponent = () => {
   return (
-    <div className="App">
-      <h2>Hello, World!</h2>
-    </div>
+    <ChakraProvider>
+      <Center h="100vh" w="100vw">
+        <Counter />
+      </Center>
+    </ChakraProvider>
   );
 };
 
