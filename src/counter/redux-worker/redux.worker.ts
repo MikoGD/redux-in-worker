@@ -1,4 +1,4 @@
-import { createStore, Action } from 'redux';
+import { createStore } from 'redux';
 import { RootState, SliceFn, REDUX_MESSAGE_TYPE, ONMESSAGE_TYPE, CounterAction } from './types';
 
 const initialState: RootState = {
@@ -33,21 +33,14 @@ store.subscribe(() => {
   });
 });
 
-/* eslint-disable-next-line */
-export const selector = (cbString: string): any => {
-  /* eslint-disable-next-line */
-  const cb: (state: RootState) => any = eval(cbString);
-  return cb(store.getState());
-};
-
-export const addSubscription = (event: MessageEvent): void => {
+const addSubscription = (event: MessageEvent): void => {
   const { subscriptionId, sliceFnString } = event.data;
   /* eslint-disable no-eval */
   subscriptions.set(subscriptionId, eval(sliceFnString));
   /* eslint-enable no-eval */
 };
 
-export const removeSubscription = (event: MessageEvent): void => {
+const removeSubscription = (event: MessageEvent): void => {
   const { subscriptionId } = event.data;
 
   subscriptions.delete(subscriptionId);
