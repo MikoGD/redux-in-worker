@@ -1,10 +1,11 @@
 import React from 'react';
-import { Flex, Button, Heading, Center, Text } from '@chakra-ui/react';
+import { Flex, Button, Heading, Center, Text, Spinner } from '@chakra-ui/react';
 import { dispatch } from './managers/worker.manager';
 import { useSelector } from './managers/hooks';
 
 export const Counter: React.FC = () => {
-  const counter = useSelector((state) => state.counter);
+  const { counter, isLoading } = useSelector((state) => state.counter);
+  console.log(`counter: ${counter}`);
 
   const incrementCounter = () => {
     dispatch({ type: 'counter/increment' });
@@ -21,9 +22,7 @@ export const Counter: React.FC = () => {
   return (
     <Flex flexDir="column">
       <Center my="5">
-        <Heading>
-          <Text>{`Counter: ${counter}`}</Text>
-        </Heading>
+        <Heading>{isLoading ? <Spinner /> : <Text>{`Counter: ${counter}`}</Text>}</Heading>
       </Center>
       <Flex justifyContent="space-between" w="35rem">
         <Button type="button" onClick={incrementCounter} bgColor="gray.300">

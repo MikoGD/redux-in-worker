@@ -7,7 +7,8 @@ import { addOnMessage, addSubscription, removeOnMessage, removeSubscription, sel
 /* eslint-disable no-unused-vars */
 export const useSelector = (sliceFn: (state: RootState) => any): any => {
   // /* eslint-enable no-unused-vars */
-  const [state, setState] = useState<any>(null);
+  const [state, setState] = useState<any>(0);
+  const [isLoading, setIsLoading] = useState(false);
   const [promise, setPromise] = useState<Promise<any> | null>(null);
 
   useEffect(() => {
@@ -31,6 +32,7 @@ export const useSelector = (sliceFn: (state: RootState) => any): any => {
 
   useEffect(() => {
     if (!state) {
+      setIsLoading(true);
       setPromise(selector(sliceFn));
     }
   }, []);
@@ -38,11 +40,12 @@ export const useSelector = (sliceFn: (state: RootState) => any): any => {
   useEffect(() => {
     if (promise) {
       promise.then((data) => {
-        setState(data);
         setPromise(null);
+        setIsLoading(false);
+        setState(data);
       });
     }
   }, [promise]);
 
-  return state;
+  return { counter: state, isLoading };
 };
