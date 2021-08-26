@@ -1,43 +1,76 @@
-import { createStore } from 'redux';
-import { RootState, SliceFn, REDUX_MESSAGE_TYPE, ONMESSAGE_TYPE, CounterAction } from './types';
+import _ from 'lodash';
+import { createStore, combineReducers } from 'redux';
+import { SliceFn, REDUX_MESSAGE_TYPE, ONMESSAGE_TYPE, CounterAction } from './types';
 
-const initialState: RootState = {
+const counter1InitialState = {
   counter: 0,
 };
 
-const subscriptions = new Map<string, SliceFn>();
+const counter2InitialState = {
+  counter: 0,
+};
 
-const counterReducer = (state = initialState, action: CounterAction<string, number>) => {
+interface Subscription {
+  sliceFn: SliceFn;
+  sliceState: unknown;
+}
+
+const subscriptions = new Map<string, Subscription>();
+
+const counterReducer1 = (state = counter1InitialState, action: CounterAction<string, number>) => {
   switch (action.type) {
-    case 'counter/increment':
+    case 'counter1/increment':
       return { counter: state.counter + 1 };
-    case 'counter/decrement':
+    case 'counter1/decrement':
       return { counter: state.counter - 1 };
-    case 'counter/multiply':
+    case 'counter1/multiply':
       return { counter: state.counter * (action.payload ?? 0) };
     default:
       return state;
   }
 };
 
-const store = createStore(counterReducer);
+const counterReducer2 = (state = counter2InitialState, action: CounterAction<string, number>) => {
+  switch (action.type) {
+    case 'counter2/increment':
+      return { counter: state.counter + 1 };
+    case 'counter2/decrement':
+      return { counter: state.counter - 1 };
+    case 'counter2/multiply':
+      return { counter: state.counter * (action.payload ?? 0) };
+    default:
+      return state;
+  }
+};
+
+const rootReducer = combineReducers({ counterReducer1, counterReducer2 });
+
+const store = createStore(rootReducer);
 
 store.subscribe(() => {
-  subscriptions.forEach((sliceFn, id) => {
-    postMessage({
-      onmessageType: ONMESSAGE_TYPE.EXTERNAL,
-      type: REDUX_MESSAGE_TYPE.UPDATE,
-      id,
-      state: sliceFn(store.getState()),
-    });
+  subscriptions.forEach(({ sliceFn, sliceState }, id) => {
+    const currStoreState = store.getState();
+    const newSliceState = sliceFn(currStoreState);
+    const isEqual = _.isEqual(newSliceState, sliceState);
+
+    if (!isEqual) {
+      postMessage({
+        onmessageType: ONMESSAGE_TYPE.EXTERNAL,
+        type: REDUX_MESSAGE_TYPE.UPDATE,
+        id,
+        state: newSliceState,
+      });
+    }
   });
 });
 
 const addSubscription = (event: MessageEvent): void => {
   const { subscriptionId, sliceFnString } = event.data;
   /* eslint-disable no-eval */
-  subscriptions.set(subscriptionId, eval(sliceFnString));
+  const sliceFn = eval(sliceFnString);
   /* eslint-enable no-eval */
+  const sliceState = sliceFn(store.getState());
+  subscriptions.set(subscriptionId, { sliceFn, sliceState });
 };
 
 const removeSubscription = (event: MessageEvent): void => {
@@ -57,13 +90,14 @@ const handleSelectMessage = (event: MessageEvent) => {
 
   /* eslint-disable no-eval */
   const cb = eval(sliceFnString);
+  const state = cb(store.getState());
   /* eslint-enable no-eval */
 
   postMessage({
     onmessageType: ONMESSAGE_TYPE.INTERNAL,
     type: REDUX_MESSAGE_TYPE.SELECT,
     selectId,
-    state: cb(store.getState()),
+    state,
   });
 };
 

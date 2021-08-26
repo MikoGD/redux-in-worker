@@ -4,19 +4,20 @@ import { dispatch } from './managers/worker.manager';
 import { useSelector } from './managers/hooks';
 
 export const Counter: React.FC = () => {
-  const { counter, isLoading } = useSelector((state) => state.counter);
-  console.log(`counter: ${counter}`);
+  console.log('Rendering counter1');
+
+  const { counter, isLoading } = useSelector((state) => state.counterReducer1.counter);
 
   const incrementCounter = () => {
-    dispatch({ type: 'counter/increment' });
+    dispatch({ type: 'counter1/increment' });
   };
 
   const decrementCounter = () => {
-    dispatch({ type: 'counter/decrement' });
+    dispatch({ type: 'counter1/decrement' });
   };
 
   const multiplyCounter = () => {
-    dispatch({ type: 'counter/multiply', payload: 2 });
+    dispatch({ type: 'counter1/multiply', payload: 2 });
   };
 
   return (
