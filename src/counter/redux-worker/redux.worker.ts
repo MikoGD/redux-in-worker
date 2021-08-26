@@ -54,6 +54,8 @@ store.subscribe(() => {
     const isEqual = _.isEqual(newSliceState, sliceState);
 
     if (!isEqual) {
+      subscriptions.set(id, { sliceFn, sliceState: newSliceState });
+
       postMessage({
         onmessageType: ONMESSAGE_TYPE.EXTERNAL,
         type: REDUX_MESSAGE_TYPE.UPDATE,
