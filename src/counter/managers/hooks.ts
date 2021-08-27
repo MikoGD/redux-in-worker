@@ -3,13 +3,16 @@ import { v4 as uuid } from 'uuid';
 import { REDUX_MESSAGE_TYPE, RootState } from '../redux-worker/types';
 import { addOnMessage, addSubscription, removeOnMessage, removeSubscription, selector } from './worker.manager';
 
+interface SelectorState<T> {
+  isLoading: boolean;
+  state: T | undefined;
+}
+
 /* eslint-disable import/prefer-default-export */
 /* eslint-disable no-unused-vars */
-export const useSelector = (sliceFn: (state: RootState) => any): any => {
+export const useSelector = <T>(sliceFn: (state: RootState) => T, initialState: T): any => {
   // /* eslint-enable no-unused-vars */
-  const [state, setState] = useState<any>(0);
-  const [isLoading, setIsLoading] = useState(false);
-  const [promise, setPromise] = useState<Promise<any> | null>(null);
+  const [state, setState] = useState<SelectorState<T>>({ isLoading: true, state: initialState });
 
   useEffect(() => {
     const id = uuid();
@@ -20,7 +23,7 @@ export const useSelector = (sliceFn: (state: RootState) => any): any => {
       const { type, state: newState } = messageEvent.data;
 
       if (type === REDUX_MESSAGE_TYPE.UPDATE) {
-        setState(newState);
+        setState({ state: newState, isLoading: false });
       }
     }, id);
 
@@ -31,21 +34,10 @@ export const useSelector = (sliceFn: (state: RootState) => any): any => {
   }, []);
 
   useEffect(() => {
-    if (!state) {
-      setIsLoading(true);
-      setPromise(selector(sliceFn));
-    }
+    selector<T>(sliceFn).then((data) => {
+      setState({ state: data, isLoading: false });
+    });
   }, []);
 
-  useEffect(() => {
-    if (promise) {
-      promise.then((data) => {
-        setPromise(null);
-        setIsLoading(false);
-        setState(data);
-      });
-    }
-  }, [promise]);
-
-  return { counter: state, isLoading };
+  return { counter: state.state, isLoading: state.isLoading };
 };

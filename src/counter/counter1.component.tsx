@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Flex, Button, Heading, Center, Text, Spinner } from '@chakra-ui/react';
 import { dispatch } from './managers/worker.manager';
 import { useSelector } from './managers/hooks';
@@ -6,7 +6,10 @@ import { useSelector } from './managers/hooks';
 export const Counter: React.FC = () => {
   console.log('Rendering counter1');
 
-  const { counter, isLoading } = useSelector((state) => state.counterReducer1.counter);
+  const { counter, isLoading } = useSelector<number>(
+    useCallback((state) => state.counterReducer1.counter, []),
+    0
+  );
 
   const incrementCounter = () => {
     dispatch({ type: 'counter1/increment' });
