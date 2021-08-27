@@ -24,7 +24,7 @@ const counterReducer1 = (state = counter1InitialState, action: CounterAction<str
     case 'counter1/decrement':
       return { counter: state.counter - 1 };
     case 'counter1/multiply':
-      return { counter: state.counter * (action.payload ?? 0) };
+      return { counter: state.counter * (action.payload ?? 1) };
     default:
       return state;
   }
@@ -37,7 +37,7 @@ const counterReducer2 = (state = counter2InitialState, action: CounterAction<str
     case 'counter2/decrement':
       return { counter: state.counter - 1 };
     case 'counter2/multiply':
-      return { counter: state.counter * (action.payload ?? 0) };
+      return { counter: state.counter * (action.payload ?? 1) };
     default:
       return state;
   }
