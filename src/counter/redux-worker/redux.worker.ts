@@ -16,6 +16,7 @@ interface Subscription {
 }
 
 const subscriptions = new Map<string, Subscription>();
+const sameSubscriptions = new Map<string, Subscription[]>();
 
 const counterReducer1 = (state = counter1InitialState, action: CounterAction<string, number>) => {
   switch (action.type) {
@@ -48,6 +49,7 @@ const rootReducer = combineReducers({ counterReducer1, counterReducer2 });
 const store = createStore(rootReducer);
 
 store.subscribe(() => {
+  const start = performance.now();
   subscriptions.forEach(({ sliceFn, sliceState }, id) => {
     const currStoreState = store.getState();
     const newSliceState = sliceFn(currStoreState);
@@ -64,6 +66,8 @@ store.subscribe(() => {
       });
     }
   });
+
+  console.log(`Time taken to update all slices: ${performance.now() - start}`);
 });
 
 const addSubscription = (event: MessageEvent): void => {

@@ -44,8 +44,27 @@ export const addOnMessage = (onMessage: (messageEvent: MessageEvent) => void, id
 
 export const removeOnMessage = (id: string): boolean => onMessageMap.delete(id);
 
+const sameSubscriptions = new Map<string, string[]>();
+const sliceFnToSameSubMap = new Map<string, string>();
+
 export const addSubscription = (id: string, sliceFn: SliceFn): void => {
-  worker.postMessage({ type: REDUX_MESSAGE_TYPE.ADD_SUB, subscriptionId: id, sliceFnString: String(sliceFn) });
+  const sliceFnString = String(sliceFn);
+  const sameSubId = sliceFnToSameSubMap.get(sliceFnString);
+
+  if (sameSubId) {
+    const subsArr = sameSubscriptions.get(sameSubId);
+
+    if (subsArr) {
+      subsArr.push(id);
+      sameSubscriptions.set(sameSubId, subsArr);
+    }
+  } else {
+    const newSameSubId = uuid();
+    const newSubsArr = [id];
+    sliceFnToSameSubMap.set(sliceFnString, newSameSubId);
+    sameSubscriptions.set(newSameSubId, newSubsArr);
+    worker.postMessage({ type: REDUX_MESSAGE_TYPE.ADD_SUB, subscriptionId: newSameSubId, sliceFnString });
+  }
 };
 
 export const removeSubscription = (id: string): void => {
@@ -62,13 +81,25 @@ const handleSelectMessage = (event: MessageEvent) => {
   }
 };
 
-const handleExternalMessage = (event: MessageEvent) => {
+const handleExternalMessage = async (event: MessageEvent) => {
   const { id } = event.data;
-  const currOnMessage = onMessageMap.get(id);
+  const sameSubsArr = sameSubscriptions.get(id);
+  const promises: Promise<any>[] = [];
 
-  if (currOnMessage) {
-    currOnMessage(event);
-  }
+  sameSubsArr?.forEach((subId) => {
+    promises.push(
+      new Promise((resolve) => {
+        const currOnMessage = onMessageMap.get(subId);
+
+        if (currOnMessage) {
+          currOnMessage(event);
+        }
+        resolve('done');
+      })
+    );
+  });
+
+  Promise.all(promises);
 };
 
 const handleInternalOnMessage = (event: MessageEvent) => {
